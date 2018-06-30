@@ -1,0 +1,13 @@
+a = a + b
+a += b
+a.append(x)
+a.insert(0, x)
+a.extend(b)
+a.remove(x)
+a.pop(0)
+del a[0]
+a.reverse()
+reversed(a)
+a.sort()
+sorted(a)
+copy.copy(a)
