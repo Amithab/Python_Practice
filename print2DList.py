@@ -36,3 +36,9 @@ def print2dList(a):
 # Let's give the new function a try!
 a = [ [ 1, 2, 3 ] , [ 4, 5, 67 ] ]
 print2dList(a)
+
+
+# lists all the columns of the above 2d list which is the same as the transpose
+a_T = [[a[i][x] for i in range(len(a))] for x in range(len(a[0]))]
+
+print2dList(a_T)
