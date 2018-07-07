@@ -47,6 +47,17 @@ def draw(canvas, width, height):
     label = str(hour if (hour>0) else 12)
     canvas.create_text(hourX,hourY, text = label, font="Arial 16 bold")
 
+  #quiz 4 code tracing
+  a = 200
+  canvas.create_oval(a-150, a-150, a+150, a+150)
+
+  b, c = 150, 100
+  canvas.create_rectangle(b, c, b+100, c+200)
+  canvas.create_rectangle(b, c, b+50, c+50)
+  canvas.create_rectangle(b+50, c+150, b+100, c+200)
+  canvas.create_text(0, 50, anchor=W, text="HACK112!")
+  canvas.create_line(width, 0, width/2, height)
+
 
 def runDrawing(width=300, height=300):
   root = Tk()
@@ -56,4 +67,4 @@ def runDrawing(width=300, height=300):
   root.mainloop()
   print("bye!")
 
-runDrawing(800,600)
+runDrawing(400,400)
