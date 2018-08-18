@@ -66,7 +66,8 @@ def buildPeerCoors(row, col, size):
 """
 Prints out sudoku board for given size
 """
-def printBoard(grid, size):
+def printBoard(grid):
+  size = len(grid)
   blockSize = int(math.sqrt(size))
   print("\n")
   for rowInd, row in enumerate(grid):
@@ -90,9 +91,9 @@ def testLinks(board):
 """
 Interlink all boxes with their peer box instances
 """
-def buildLinks(board, size):
+def buildLinks(board):
   #print("Building Links")
-  blockSize = int(math.sqrt(size))
+  blockSize = int(math.sqrt(len(board)))
   for rowInd, row in enumerate(board):
     for colInd, box in enumerate(row):
       box.peers = [board[x[0]][x[1]] for x in buildPeerCoors(box.rowPos, box.colPos, blockSize)]
@@ -100,10 +101,10 @@ def buildLinks(board, size):
 """
 Finds next box for recursive search
 """
-def findNextBox(grid, box, size):
-  if box.colPos < size - 1:
+def findNextBox(grid, box):
+  if box.colPos < len(grid) - 1:
     return grid[box.rowPos][box.colPos+1]
-  elif box.rowPos < size - 1:
+  elif box.rowPos < len(grid) - 1:
     return grid[box.rowPos+1][0]
   return None
 
@@ -121,20 +122,20 @@ def testFindNextBox():
 """
 Recursive function to fill up board randomly and legally
 """
-def fillRecur(grid, box, size):
+def fillRecur(grid, box):
   neighborVals = [x.value for x in box.peers if x.value]
-  options = [x for x in range(1, size+1) if x not in neighborVals]
+  options = [x for x in range(1, len(grid)+1) if x not in neighborVals]
   random.shuffle(options)
 
   for posVal in options:
     box.value = posVal
-    nextBox = findNextBox(grid, box, size)
+    nextBox = findNextBox(grid, box)
     # base case 1 if board is filled
     if not nextBox:
       return True
 
     # recursive call
-    if fillRecur(grid, nextBox, size):
+    if fillRecur(grid, nextBox):
       return True
 
   # base case 2 if no option works move up to upper level
@@ -142,11 +143,11 @@ def fillRecur(grid, box, size):
   return False
 
 # Builds links and calls recursive fill function
-def fillBoard(board, size):
-  buildLinks(board, size)
+def fillBoard(board):
+  buildLinks(board)
 
   # recursive board filling
-  isFilled = fillRecur(board, board[0][0], size)
+  isFilled = fillRecur(board, board[0][0])
 
   if not isFilled:
     return False
@@ -159,7 +160,7 @@ And checks for legality
 """
 def generateBoard(size):
   board = [[Box(row, col) for col in range(size)] for row in range(size)]
-  if not fillBoard(board, size):
+  if not fillBoard(board):
     print("Could not generate board")
     return False
   elif not isLegalSudoku(transformBoard(board)):
@@ -175,18 +176,18 @@ def getBoard(matrix):
   size = len(matrix)
   board = [[Box(row, col, matrix[row][col]) for col in range(size)] for row in range(size)]
 
-  buildLinks(board, size)
+  buildLinks(board)
   return board
 
 
-def solveRecur(origMatrix, grid, box, size):
+def solveRecur(origMatrix, grid, box):
   options = []
+  # skips processing this box if part of original matrix
   if origMatrix[box.rowPos][box.colPos]:
-    
-    nextBox = findNextBox(grid, box, size)
+    nextBox = findNextBox(grid, box)
     if not nextBox:
       return True
-    if solveRecur(origMatrix, grid, nextBox, size):
+    if solveRecur(origMatrix, grid, nextBox):
       return True
     return False
     
@@ -199,18 +200,18 @@ def solveRecur(origMatrix, grid, box, size):
       elif origMatrix[peer.rowPos][peer.colPos]:
         neighborVals.append(origMatrix[peer.rowPos][peer.colPos])
 
-    options.extend([x for x in range(1, size+1) if x not in neighborVals])
+    options.extend([x for x in range(1, len(grid)+1) if x not in neighborVals])
 
   for posVal in options:
     box.value = posVal
-    nextBox = findNextBox(grid, box, size)
+    nextBox = findNextBox(grid, box)
 
     # base case 1 if board is filled
     if not nextBox:
       return True
 
     # recursive call
-    if solveRecur(origMatrix, grid, nextBox, size):
+    if solveRecur(origMatrix, grid, nextBox):
       return True
 
   # base case 2 if no option works move up to upper level
@@ -239,10 +240,24 @@ if board:
   printBoard(board, 9)
 """
 
+#def findDupRecur(origMatrix, grid, box, size, 0
+
+
+#def findDuplicateSolutions(origMatrix, grid):
+#  duplicateExists = findDupRecur(origMatrix, grid, grid[0][0], 0)
+
+
+
+#def generatePuzzle():
+#  board = generateBoard(9)
+
+
+
+
 def solveMat(matrix):
   board = getBoard(matrix)
-  solveRecur(matrix, board, board[0][0], len(matrix))
-  printBoard(board, len(matrix))
+  solveRecur(matrix, board, board[0][0])
+  printBoard(board)
   print(isLegalSudoku(transformBoard(board)))
 
 matrix = [[0,0,3,0,1,0,0,2,0],
@@ -274,7 +289,10 @@ matrix = [[0,0,3,0,1,0,0,2,0],
             [0,0,8,7,4,3,0,0,0],
             [0,0,0,0,0,0,2,8,0],
             [0,0,0,0,0,1,0,0,4]]
-#solveMat(matrix)
+import time
+sT = time.time()
+solveMat(matrix)
+print(" easy puzzle --- %s seconds --- " %(time.time()-sT))
 # hard puzzle
 matrix = [[7,1,0,2,0,0,0,0,0],
             [0,9,0,7,0,0,0,0,1],
@@ -285,7 +303,9 @@ matrix = [[7,1,0,2,0,0,0,0,0],
             [5,0,9,0,0,0,0,0,7],
             [1,0,0,0,0,8,0,3,0],
             [0,0,0,0,0,1,0,5,9]]
+sT = time.time()
 solveMat(matrix)
+print(" hard puzzle --- %s seconds --- " %(time.time()-sT))
 
 #hardest
 matrix = [[0,6,1,0,0,7,0,0,3],
@@ -297,9 +317,37 @@ matrix = [[0,6,1,0,0,7,0,0,3],
             [0,4,0,0,0,0,0,0,1],
             [0,0,0,1,6,0,8,0,0],
             [6,0,0,0,0,0,0,0,0]]
+sT = time.time()
 solveMat(matrix)
+print(" hardest puzzle --- %s seconds --- " %(time.time()-sT))
 
+# Inkala2010
+matrix = [[0,0,5,3,0,0,0,0,0],
+            [8,0,0,0,0,0,0,2,0],
+            [0,7,0,0,1,0,5,0,0],
+            [4,0,0,0,0,5,3,0,0],
+            [0,1,0,0,7,0,0,0,6],
+            [0,0,3,2,0,0,0,8,0],
+            [0,6,0,5,0,0,0,0,9],
+            [0,0,4,0,0,0,0,3,0],
+            [0,0,0,0,0,9,7,0,0]]
+sT = time.time()
+solveMat(matrix)
+print(" Inkala2010 puzzle --- %s seconds --- " %(time.time()-sT))
 
+# Inkala2012
+matrix = [[8,0,0,0,0,0,0,0,0],
+            [0,0,3,6,0,0,0,0,0],
+            [0,7,0,0,9,0,2,0,0],
+            [0,5,0,0,0,7,0,0,0],
+            [0,0,0,0,4,5,7,0,0],
+            [0,0,0,1,0,0,0,3,0],
+            [0,0,1,0,0,0,0,6,8],
+            [0,0,8,5,0,0,0,1,0],
+            [0,9,0,0,0,0,4,0,0]]
+sT = time.time()
+solveMat(matrix)
+print(" Inkala2012 puzzle --- %s seconds --- " %(time.time()-sT))
 
 ####################################
 # customize these functions
