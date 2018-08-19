@@ -219,6 +219,33 @@ def solveRecur(origMatrix, grid, box):
   return False
 
 
+def solveRecur2(cells):
+  if len(cells):
+    currBox = cells.pop(0)
+  else:
+    return True
+
+  neighborVals = [x.value for x in currBox.peers]
+    
+  options = [x for x in range(1, 10) if x not in neighborVals]
+
+  for posVal in options:
+    currBox.value = posVal
+
+    if solveRecur2(cells):
+      return True
+
+  currBox.value = 0
+  cells.insert(0, currBox)
+  return False
+
+
+def solveMatrix(board):
+  cells = [board[x][y] for x in range(len(board)) for y in range(len(board)) if not board[x][y].value]
+  return solveRecur2(cells)
+
+
+
 """
 Transforms 2d array of Box objects into 2d array of values for sudoku
 """
@@ -227,6 +254,51 @@ def transformBoard(board):
   for rowInd, row in enumerate(board):
     grid.append([x.value for x in row])
   return grid
+
+
+
+
+
+dups = 0
+def findDupRecur2(cells):
+  global dups
+  if len(cells):
+    currBox = cells.pop(0)
+  else:
+    dups+=1
+    if dups > 1:
+      return True
+    return False
+
+  neighborVals = [x.value for x in currBox.peers]
+  options = [x for x in range(1,10) if x not in neighborVals]
+  
+  for posVal in options:
+    currBox.value = posVal
+
+    if findDupRecur2(cells):
+      return True
+
+  currBox.value = 0
+  cells.insert(0, currBox)
+  return False
+
+def findDupSol2(board):
+  global dups
+  dups = 0
+  cells = [board[x][y] for x in range(len(board)) for y in range(len(board)) if not board[x][y].value]
+  cells2 = cells.copy()
+  duplicateExists = findDupRecur2(cells)
+  for box in cells2:
+    box.value = 0
+  #print("end of duplicates\n")
+  #printBoard(board)
+  return duplicateExists
+
+
+
+
+
 
 #import time
 #start_time = time.time()
@@ -239,17 +311,125 @@ if board:
   print(isLegalSudoku(transformed))
   printBoard(board, 9)
 """
+# use duplicate global variable to count # of solutions
+duplicates = 0
 
-#def findDupRecur(origMatrix, grid, box, size, 0
+def findDupRecur(origMatrix, grid, box):
+  # skips options processing if box part of original matrix
+  global duplicates
+  if origMatrix[box.rowPos][box.colPos]:
+    nextBox = findNextBox(grid, box)
+    if not nextBox:
+      if duplicates == 2:
+        return True
+      return False
+    if findDupRecur(origMatrix, grid, nextBox):
+      return True
+    return False
+
+  neighborVals = []
+  for peer in box.peers:
+    if peer.value:
+      neighborVals.append(peer.value)
+    elif origMatrix[peer.rowPos][peer.colPos]:
+      neighborVals.append(origMatrix[peer.rowPos][peer.colPos])
+
+  options = [x for x in range(1, len(grid)+1) if x not in neighborVals]
+  for posVal in options:
+    box.value = posVal
+    nextBox = findNextBox(grid, box)
+
+    if not nextBox:
+      duplicates+=1
+      if duplicates > 1:
+        return True
+      return False
+
+    if findDupRecur(origMatrix, grid, nextBox):
+      return True
+
+  box.value = 0
+  return False
+
+def findDuplicateSolutions(origMatrix, grid):
+  global duplicates
+  duplicates = 0
+  return findDupRecur(origMatrix, grid, grid[0][0])
 
 
-#def findDuplicateSolutions(origMatrix, grid):
-#  duplicateExists = findDupRecur(origMatrix, grid, grid[0][0], 0)
+
+matrix = [[0,8,0,0,0,9,7,4,3],
+            [0,5,0,0,0,8,0,1,0],
+            [0,1,0,0,0,0,0,0,0],
+            [8,0,0,0,0,5,0,0,0],
+            [0,0,0,8,0,4,0,0,0],
+            [0,0,0,3,0,0,0,0,6],
+            [0,0,0,0,0,0,0,7,0],
+            [0,3,0,5,0,0,0,8,0],
+            [9,7,2,4,0,0,0,5,0]]
+import time
+
+def isUnique(matrix, display=True, timed=False, printStatement=None):
+  if timed:
+    startTime = time.time()
+  board = getBoard(matrix)
+  duplicateExists = findDupSol2(board)#findDuplicateSolutions(matrix, board)
+  if display:
+    if duplicateExists:
+      print("Duplicates exist - Not unique!")
+    else:
+      print("Unique!")
+  if timed:
+    if printStatement:
+        print("%s - %s seconds" %(printStatement, time.time()-startTime))
+    else:
+      print(" --- %s seconds --- " %(time.time()-startTime))
+  return not duplicateExists
+
+#isUnique(matrix, True, True, "Duplicate puzzle")
 
 
+def generatePuzzle():
+  board = generateBoard(9)
 
-#def generatePuzzle():
-#  board = generateBoard(9)
+  cells = []
+  count = 0
+  for rowInd, row in enumerate(board):
+    cells.extend(row)
+
+  #print(cells)
+  random.shuffle(cells)
+  #len(cells)
+  for cell in cells:
+    currValue = cell.value
+    cell.value = 0
+    if findDupSol2(board):
+      cell.value = currValue
+
+
+    #for colInd, box in enumerate(row):
+    #  count+=1
+    #  startTime = time.time()
+    #  currValue = box.value
+    #  box.value = 0
+      #print("Before replaced", box.rowPos, box.colPos, box.value, currValue, "\n")
+      #printBoard(board)
+    #  if findDupSol2(board):
+        #print("Replaced", box.rowPos, box.colPos, box.value, currValue)
+    #    box.value = currValue
+      #if findDuplicateSolutions(transformBoard(board), board):
+      #  print("Replaced")
+      #  box.value = currValue
+      #print(" %d squares done. %s seconds" %(count, time.time()-startTime))
+      #printBoard(board)
+      #print("board", transformBoard(board))
+
+  printBoard(board)
+
+sT = time.time()
+generatePuzzle()
+print("generation time: %s seconds" %(time.time()-sT))
+
 
 
 
@@ -259,6 +439,13 @@ def solveMat(matrix):
   solveRecur(matrix, board, board[0][0])
   printBoard(board)
   print(isLegalSudoku(transformBoard(board)))
+
+def solveMat2(matrix):
+  board = getBoard(matrix)
+  isSolved = solveMatrix(board)
+  print("Solved:", isSolved)
+  printBoard(board)
+  print("IsLegal:", isLegalSudoku(transformBoard(board)))
 
 matrix = [[0,0,3,0,1,0,0,2,0],
             [9,0,5,3,0,0,0,4,0],
@@ -270,6 +457,24 @@ matrix = [[0,0,3,0,1,0,0,2,0],
             [0,0,0,0,0,0,2,8,0],
             [0,0,0,0,0,1,0,0,4]]
 
+#isUnique(matrix, True, True, "Easy unique puzzle")
+
+#print(solveMatrix(getBoard(matrix)))
+"""
+sT = time.time()
+solveMat2(matrix)
+print("--- %s seconds ---" %(time.time()-sT))
+"""
+#import time
+"""
+sT = time.time()
+board = getBoard(matrix)
+print(findDuplicateSolutions2(matrix, board))
+print(" easy unique puzzle --- %s seconds --- " %(time.time()-sT))
+sT = time.time()
+solveMat(matrix)
+print(" easy puzzle --- %s seconds --- " %(time.time()-sT))
+"""
 """
 Long test:
 import time
@@ -289,6 +494,7 @@ matrix = [[0,0,3,0,1,0,0,2,0],
             [0,0,8,7,4,3,0,0,0],
             [0,0,0,0,0,0,2,8,0],
             [0,0,0,0,0,1,0,0,4]]
+"""
 import time
 sT = time.time()
 solveMat(matrix)
@@ -306,7 +512,7 @@ matrix = [[7,1,0,2,0,0,0,0,0],
 sT = time.time()
 solveMat(matrix)
 print(" hard puzzle --- %s seconds --- " %(time.time()-sT))
-
+"""
 #hardest
 matrix = [[0,6,1,0,0,7,0,0,3],
             [0,9,2,0,0,3,0,0,0],
@@ -317,6 +523,20 @@ matrix = [[0,6,1,0,0,7,0,0,3],
             [0,4,0,0,0,0,0,0,1],
             [0,0,0,1,6,0,8,0,0],
             [6,0,0,0,0,0,0,0,0]]
+#isUnique(matrix, True, True, "Hardest unique puzzle")
+"""
+sT = time.time()
+solveMat2(matrix)
+print("--- hardest puzzle %s seconds ---" %(time.time()-sT))
+"""
+"""
+sT = time.time()
+board = getBoard(matrix)
+print(findDuplicateSolutions2(matrix, board))
+print(" hardest dup puzzle --- %s seconds --- " %(time.time()-sT))
+"""
+
+"""
 sT = time.time()
 solveMat(matrix)
 print(" hardest puzzle --- %s seconds --- " %(time.time()-sT))
@@ -348,7 +568,7 @@ matrix = [[8,0,0,0,0,0,0,0,0],
 sT = time.time()
 solveMat(matrix)
 print(" Inkala2012 puzzle --- %s seconds --- " %(time.time()-sT))
-
+"""
 ####################################
 # customize these functions
 ####################################
